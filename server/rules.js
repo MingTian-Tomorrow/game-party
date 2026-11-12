@@ -1,7 +1,7 @@
 export function fail(message,status=400){throw Object.assign(new Error(message),{status});}
 export function text(value,name,max=200){if(typeof value!=='string'||!value.trim()||value.trim().length>max)fail(`${name}不能为空，且最多 ${max} 字`);return value.trim();}
 export function score(v){if(v===null||v===undefined||v==='')return null;const n=Number(v);if(!Number.isInteger(n)||n<1||n>5)fail('评分须为 1～5');return n;}
-export function reviewOpen(game,now=Date.now()){return !game.cancelled && now>=new Date(game.ends_at).getTime() && now<new Date(game.ends_at).getTime()+72*3600000;}
+export function reviewOpen(game,now=Date.now()){return !game.cancelled && now>=new Date(game.ends_at).getTime() && now<new Date(game.ends_at).getTime()+3600000;}
 export function gameFields(b){
  const start=new Date(b.starts_at),end=new Date(b.ends_at),capacity=Number(b.capacity);
  if(!Number.isFinite(+start)||!Number.isFinite(+end)||start<=new Date()||end<=start||end-start>86400000)fail('请选择未来的开场时间，时长须在 24 小时内');

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- Volleyball seams adapted from lucide-static 0.468.0, ISC; see lucide-LICENSE.txt. -->
+<defs><filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#006241" flood-opacity=".28"/></filter></defs>
+<circle cx="32" cy="29" r="24" fill="#fffdf6" stroke="#006241" stroke-width="2.5" filter="url(#shadow)"/>
+<g transform="translate(3.2 .2) scale(2.4)" fill="none" stroke="#006241" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M11.1 7.1a16.55 16.55 0 0 1 10.9 4"/>
+<path d="M12 12a12.6 12.6 0 0 1-8.7 5"/>
+<path d="M16.8 13.6a16.55 16.55 0 0 1-9 7.5"/>
+<path d="M20.7 17a12.8 12.8 0 0 0-8.7-5 13.3 13.3 0 0 1 0-10"/>
+<path d="M6.3 3.8a16.55 16.55 0 0 0 1.9 11.5"/>
+</g></svg>
