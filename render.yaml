@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: game-party
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run db:init && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.14.0
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_USER_ID
+        sync: false
