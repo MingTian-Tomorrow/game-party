@@ -8,7 +8,7 @@ export function gameFields(b){
  if(!Number.isInteger(capacity)||capacity<2||capacity>48)fail('人数须为 2～48');
  return {title:text(b.title,'标题',60),venue:text(b.venue,'场地',160),starts_at:start,ends_at:end,capacity,level:text(b.level,'水平',30),fee:text(b.fee,'费用说明',80),notes:String(b.notes||'').slice(0,1000)};
 }
-export function profile(user,registrations,reviews){
+export function profile(user,registrations,reviews,now=Date.now()){
  const present=registrations.filter(r=>r.attendance==='present').length;
  const absent=registrations.filter(r=>r.attendance==='absent').length;
  const aggregate=key=>{
@@ -18,8 +18,14 @@ export function profile(user,registrations,reviews){
   return {score:Math.round((5*base+values.reduce((s,x)=>s+x,0))/(5+values.length)*20),count:values.length};
  };
  const skill=aggregate('skill'),spirit=aggregate('spirit');
- const reputation=Math.round((400+100*present)/(5+present+absent));
+ const reputation=Math.min(100,80+3*present-20*absent);
+ const recent=registrations.filter(r=>new Date(r.ends_at).getTime()>now-30*86400000&&new Date(r.ends_at).getTime()<=now);
+ const recentPresent=recent.filter(r=>r.attendance==='present');
+ const recentAbsent=recent.filter(r=>r.attendance==='absent').length;
+ const activeDays=new Set(recentPresent.map(r=>new Date(new Date(r.starts_at||r.ends_at).getTime()+8*3600000).toISOString().slice(0,10))).size;
+ const lastPlayed=registrations.filter(r=>r.attendance==='present'&&r.ends_at).map(r=>new Date(r.ends_at).toISOString()).sort().at(-1)||null;
+ const activity={days:activeDays,games:recentPresent.length,label:activeDays>=8?'非常活跃':activeDays>=4?'经常打球':activeDays>=1?'偶尔上场':'近期未到场'};
  const eligible=true;
  const overall=Math.round(reputation*.4+skill.score*.3+spirit.score*.3);
- return {id:user.id,nickname:user.nickname,avatar_version:user.avatar_version||null,present,absent,reputation,skill,spirit,overall,eligible};
+ return {id:user.id,nickname:user.nickname,avatar_version:user.avatar_version||null,present,absent,recentAbsent,activity,lastPlayed,reputation,skill,spirit,overall,eligible};
 }

@@ -47,7 +47,7 @@ test('赛中确认到场、即时更新评分、超时拒绝、缺勤审核撤�
  assert.equal((await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'absent',reason:'冒充审核'},'waiting')).status,403);
  assert.equal((await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'absent'})).status,400);
  assert.equal((await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'absent',reason:'组织者已核实'})).status,200);
- assert.equal((await scores()).reputation,67);
+ assert.equal((await scores()).reputation,60);
  assert.equal((await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'present',reason:'组织者更正误报'})).status,200);
  assert.equal((await scores()).reputation,83);
  await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'reported_absent'});
@@ -59,7 +59,7 @@ test('赛中确认到场、即时更新评分、超时拒绝、缺勤审核撤�
  const me=(await call('/me',undefined,'admin')).data;assert.equal(me.pendingCount,1);assert.equal(me.adminConfigured,true);
  assert.equal((await call('/admin/issues')).status,200);
  const audit=(await call('/admin/issues',undefined,'admin')).data;assert.equal(audit.absent.length,1);assert.ok(audit.history.length>0);
- await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'absent',reason:'经核实未到场'},'admin');assert.equal((await scores()).reputation,67);
+ await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'absent',reason:'经核实未到场'},'admin');assert.equal((await scores()).reputation,60);
  await call('/games/'+id+'/attendance',{user_id:'guest',attendance:'present',reason:'已核实为误报'},'admin');assert.equal((await scores()).skill.score,53);
  assert.equal((await call('/me',undefined,'admin')).data.pendingCount,0);
  await pg.query("UPDATE games SET starts_at=now()-interval '2 hours',ends_at=now()-interval '61 minutes' WHERE id=$1",[id]);
