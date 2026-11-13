@@ -23,6 +23,30 @@ export function createApp(db,{adminId=process.env.ADMIN_USER_ID,origin=process.e
  async function session(user,res){const token=randomBytes(32).toString('hex');await db.query("INSERT INTO sessions VALUES($1,$2,$3)",[hash(token),user.id,new Date(Date.now()+7*86400000)]);res.json({token,user:{id:user.id,username:user.username,nickname:user.nickname,isAdmin:user.id===adminId}});}
  app.post('/api/auth/register',async(req,res)=>{const username=text(req.body.username,'账户名',24).toLowerCase(),nickname=text(req.body.nickname,'昵称',20),password=text(req.body.password,'密码',128);if(!/^[a-z0-9_]{3,24}$/.test(username))fail('账户名须为 3～24 位小写字母、数字或下划线');if(password.length<10)fail('密码至少 10 位');const salt=randomBytes(16).toString('hex'),derived=await scrypt(password,salt,64);const user={id:randomUUID(),username,nickname};await db.query('INSERT INTO users VALUES($1,$2,$3,$4,now())',[user.id,username,nickname,`${salt}:${derived.toString('hex')}`]);await session(user,res);});
  app.post('/api/auth/login',async(req,res)=>{const username=text(req.body.username,'账户名',24).toLowerCase(),password=text(req.body.password,'密码',128);const {rows}=await db.query('SELECT * FROM users WHERE username=$1',[username]);const user=rows[0];const [salt,saved]=(user?.password_hash||'dummy:00').split(':');const derived=await scrypt(password,salt,64);if(!user||saved.length!==128||!timingSafeEqual(Buffer.from(saved,'hex'),derived))fail('账户名或密码不正确',401);await session(user,res);});
+ app.post('/api/admin/password-reset',admin,async(req,res)=>{
+  const username=text(req.body.username,'账户名',24).toLowerCase();
+  const token=randomBytes(32).toString('hex'),expires=new Date(Date.now()+30*60000);
+  const user=await transaction(async c=>{
+   const u=(await c.query('SELECT id,username,nickname FROM users WHERE username=$1 FOR UPDATE',[username])).rows[0];
+   if(!u)fail('账户不存在',404);
+   await c.query('INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,$3) ON CONFLICT(user_id) DO UPDATE SET token_hash=$2,expires_at=$3',[u.id,hash(token),expires]);
+   await log(c,req.user.id,null,u.id,'password_reset_issued');return u;
+  });res.json({token,expires_at:expires,user});
+ });
+ app.post('/api/auth/reset-password',async(req,res)=>{
+  const token=text(req.body.token,'重置凭证',64),password=text(req.body.password,'新密码',128);
+  if(!/^[a-f0-9]{64}$/.test(token))fail('链接无效或已过期');
+  if(password.length<10)fail('密码至少 10 位');
+  const salt=randomBytes(16).toString('hex'),derived=await scrypt(password,salt,64);
+  await transaction(async c=>{
+   const r=(await c.query('DELETE FROM password_resets WHERE token_hash=$1 AND expires_at>now() RETURNING user_id',[hash(token)])).rows[0];
+   if(!r)fail('链接无效、已使用或已过期，请联系管理员重新生成');
+   await c.query('UPDATE users SET password_hash=$2 WHERE id=$1',[r.user_id,salt+':'+derived.toString('hex')]);
+   await c.query('DELETE FROM sessions WHERE user_id=$1',[r.user_id]);
+   await log(c,r.user_id,null,r.user_id,'password_reset_completed');
+   await c.query('INSERT INTO notifications(id,user_id,message) VALUES($1,$2,$3)',[randomUUID(),r.user_id,'密码已重置，所有旧登录会话已退出。']);
+  });res.json({ok:true});
+ });
  app.post('/api/logout',auth,async(req,res)=>{await db.query('DELETE FROM sessions WHERE token_hash=$1',[hash(req.token)]);res.json({ok:true});});
  app.use('/api/games/:id',async(req,res,next)=>{
   if(req.method!=='POST'||!['/attendance','/reviews'].includes(req.path))return next();

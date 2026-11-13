@@ -71,4 +71,17 @@ test('赛中确认到场、即时更新评分、超时拒绝、缺勤审核撤�
  assert.equal(activity.timeline.at(-1).skill.score,53);
  assert.equal((await call('/me/activity',undefined,'waiting')).data.days.length,0);
  assert.equal((await call('/me/activity',undefined,'unknown')).status,401);
+ assert.equal((await call('/admin/password-reset',{username:'guest'},'host')).status,403);
+ const issued=(await call('/admin/password-reset',{username:'guest'},'admin')).data;
+ const replacement=(await call('/admin/password-reset',{username:'guest'},'admin')).data;
+ assert.equal((await call('/auth/reset-password',{token:issued.token,password:'replacement-password'})).status,400);
+ assert.equal((await call('/auth/reset-password',{token:replacement.token,password:'short'})).status,400);
+ assert.equal((await call('/auth/reset-password',{token:replacement.token,password:'replacement-password'})).status,200);
+ assert.equal((await call('/auth/reset-password',{token:replacement.token,password:'another-password'})).status,400);
+ assert.equal((await call('/me',undefined,'guest')).status,401);
+ assert.equal((await call('/auth/login',{username:'guest',password:'replacement-password'})).status,200);
+ const expired=(await call('/admin/password-reset',{username:'guest'},'admin')).data;
+ await pg.query("UPDATE password_resets SET expires_at=now()-interval '1 minute'");
+ assert.equal((await call('/auth/reset-password',{token:expired.token,password:'expired-password'})).status,400);
+
 });

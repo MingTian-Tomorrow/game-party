@@ -48,3 +48,8 @@ CREATE TABLE IF NOT EXISTS notifications (
  created_at timestamptz NOT NULL DEFAULT now(), read_at timestamptz
 );
 CREATE INDEX IF NOT EXISTS notifications_user ON notifications(user_id,created_at DESC);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+ user_id text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ token_hash text UNIQUE NOT NULL, expires_at timestamptz NOT NULL
+);
