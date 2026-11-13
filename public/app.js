@@ -149,14 +149,14 @@ function editAvatar(){
   try{
    if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('请选择 JPG、PNG 或 WebP 图片');
    if(file.size>5*1024*1024)throw Error('原图不能超过 5 MB，请选择较小的图片');
-   const url=URL.createObjectURL(file),img=new Image();
-   try{img.src=url;await img.decode();if(version!==selection)return;
+   const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('无法读取所选文件，请重新选择'));reader.readAsDataURL(file);}),img=new Image();
+   try{img.src=url;try{await img.decode();}catch{throw new Error('图片无法解码，请将图片重新导出为 JPG 或 PNG 后再试');}if(version!==selection)return;
     if(img.naturalWidth*img.naturalHeight>24000000)throw Error('图片尺寸过大，请缩小后重试');
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#f2f0eb';ctx.fillRect(0,0,128,128);
     const side=Math.min(img.naturalWidth,img.naturalHeight);ctx.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,128,128);
     prepared=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${prepared}" alt="新头像预览">`;save.disabled=false;
-   }finally{URL.revokeObjectURL(url);}
+   }finally{img.src='';}
   }catch(e){if(version!==selection)return;preview.textContent='暂时无法预览';error.textContent=e.message||'图片无法读取，请换一张图片';}
  };
 }
