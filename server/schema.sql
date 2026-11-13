@@ -36,3 +36,15 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS game_time ON games(starts_at);
 CREATE INDEX IF NOT EXISTS registrations_user ON registrations(user_id);
 CREATE INDEX IF NOT EXISTS review_target ON reviews(target_id);
+CREATE TABLE IF NOT EXISTS user_avatars (
+ user_id text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ image bytea NOT NULL CHECK(octet_length(image)<=98304),
+ version text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+ id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id),
+ message text NOT NULL, game_id text REFERENCES games(id),
+ created_at timestamptz NOT NULL DEFAULT now(), read_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS notifications_user ON notifications(user_id,created_at DESC);

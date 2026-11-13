@@ -21,5 +21,5 @@ export function profile(user,registrations,reviews){
  const reputation=Math.round((400+100*present)/(5+present+absent));
  const eligible=true;
  const overall=Math.round(reputation*.4+skill.score*.3+spirit.score*.3);
- return {id:user.id,nickname:user.nickname,present,absent,reputation,skill,spirit,overall,eligible};
+ return {id:user.id,nickname:user.nickname,avatar_version:user.avatar_version||null,present,absent,reputation,skill,spirit,overall,eligible};
 }
